@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  p Welcome to BookCatalog
+  table(border=1)
+     tr
+      th Product Name
+      th Price
+      th Select
+      th Quantity
+     -each product in products
+      tr
+        td #{product.p_name}
+        td #{product.p_price}
+        td 
+          input(type='text', name='#{product.p_id}' placeholder='Quantity')
+        td 
+          input(type='checkbox', name='#{product.p_id}' value='#{product.p_id}')
