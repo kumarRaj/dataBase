@@ -1,37 +1,41 @@
-// var connectionObject = require('./connection.js').con;
-var connectionObject = {
-	 host     : 'localhost',
-	 user     : 'raj',
-	 password : 'P@ssw0rd',
-	 database : 'dbms_assignments'
-};
-
-/*
- * GET home page.
- */
+var connectionObject = require('./connection.js').con;
 var mysql = require('mysql');
 
-var viewqueryResults = function(query, res){
+
+var viewQueryResults = function(query, res, perFormOperation){
 	var connection = mysql.createConnection(connectionObject);
 	connection.connect();
-	connection.query(query,{}, function(err, rows, fields) {
-	 if (err) throw err;
-	 	res.render('products',{products:rows});
-	});
-	connection.end();
-}
-var executeQuery = function(query, dataToInsert, res){
-	var connection = mysql.createConnection(connectionObject);
-	connection.query(query,dataToInsert, function(err, result) {
-	 if (err) throw err;
-	 res.end();
-	});
+	connection.query(query,{}, perFormOperation(res));
 	connection.end();
 }
 
+var executeQuery = function(query, dataToInsert, res, insertFunction){
+	var connection = mysql.createConnection(connectionObject);
+	connection.query(query,dataToInsert, insertFunction(res));
+	connection.end();
+}
+
+var viewProducts = function(res){
+	return function(err, rows, fields){
+			 if (err) throw err;
+			 	res.render('products',{products:rows});
+			}
+}
 exports.order = function(req, res){
 	var productsQuery = "select p_id,p_name,p_price from Product";
-	viewqueryResults(productsQuery,res);
+	viewQueryResults(productsQuery,res,viewProducts);
+}
+var insertOrder = function(res){
+	return function(err, result) {
+		 if (err) throw err;
+		 var query = "insert into orders (cust_id,amount)values("+result.insertId+",500)";
+		 var connection = mysql.createConnection(connectionObject);
+		 connection.query(query,{},function(err, result){
+		 	if (err) throw err;
+		 	console.log(result);
+		 });
+	}
+	res.end();
 }
 exports.placeOrder = function(req, res){
 	customer = {};
@@ -42,6 +46,7 @@ exports.placeOrder = function(req, res){
 	delete(products["contact_no"]);
 	console.log(customer);
 	console.log(products);
-	executeQuery('insert into customer set ?',customer,res);
-	// executeQuery('insert into orders set ?',customer,res);
+
+	executeQuery('insert into customer set ?',customer,res,insertOrder);
+	// executeQuery('insert into orders set ?c',customer,res);
 }
