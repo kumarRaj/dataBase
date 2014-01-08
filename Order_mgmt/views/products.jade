@@ -1,18 +1,25 @@
 extends layout
 
 block content
-  p Welcome to BookCatalog
-  table(border=1)
-     tr
-      th Product Name
-      th Price
-      th Select
-      th Quantity
-     -each product in products
-      tr
-        td #{product.p_name}
-        td #{product.p_price}
-        td 
-          input(type='text', name='#{product.p_id}' placeholder='Quantity')
-        td 
-          input(type='checkbox', name='#{product.p_id}' value='#{product.p_id}')
+  p Welcome to Shopping Mall
+  form(action='placeOrder' method='post')
+    table(border=1)
+       tr
+        th Product Name
+        th Price
+        th Quantity
+        th Select
+       -each product in products
+        tr
+          td #{product.p_name}
+          td #{product.p_price}
+          td 
+            input(type='text', name='#{product.p_id}' placeholder='Quantity')
+          td 
+            input(type='checkbox', name='#{product.p_id}')
+    div 
+        input(type='text', name='user_name' placeholder='Enter your name')
+        br
+        input(type='text', name='contact_no' placeholder='Contact Number')
+    input(type='submit' value='Place Order')
+
