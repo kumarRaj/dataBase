@@ -9,62 +9,68 @@ var viewQueryResults = function(query, res, perFormOperation){
 	connection.end();
 }
 
-var executeQuery = function(query, dataToInsert, products, res, insertFunction){
-	var connection = mysql.createConnection(connectionObject);
-	console.log("",dataToInsert);
-	connection.query(query,dataToInsert, insertFunction(res,products));
-	connection.end();
-}
 
 var viewProducts = function(res){
 	return function(err, rows, fields){
-			 if (err) throw err;
-			 	res.render('products',{products:rows});
-			}
+		 if (err) throw err;
+		 	res.render('products',{products:rows});
+		}
 }
 exports.order = function(req, res){
 	var productsQuery = "select p_id,p_name,p_price from Product";
 	viewQueryResults(productsQuery,res,viewProducts);
 }
-var order_items = function(products){
+
+var insertFororder_items = function(products){
 	return function(err, result){
 		if (err) throw err;
-		console.log("yaha",products);
+		var order_id = result.insertId;
+		order_items = Object.keys(products);
 		var connection = mysql.createConnection(connectionObject);
-		// var keys = Object.keys(products);
-		console.log(products);
-		connection.query("insert into order_items values("+result.insertId+",'rice_basmati',4 )",{},function(err,result){
-		if (err) throw err;
-
+		order_items.forEach(function(item){
+			var query = "insert into order_items values (" + order_id +",'" + item +"',"+ products[item] + ")";
+			connection.query(query,item,function(err,result){
+			if (err) throw err;
+			});
 		});
 	}
 }
 
-var insertOrder = function(res, products){
+var insertForOrder = function(res, products){
 	return function(err, result) {
 		 if (err) throw err;
 		 var query = "insert into orders (cust_id,amount)values("+result.insertId+",500)";
 		 var connection = mysql.createConnection(connectionObject);
-		 connection.query(query,{},order_items(products));
-		 	// console.log(result);
+		 connection.query(query,{},insertFororder_items(products));
 	}
 	res.end();
 }
+
+var insertForCustomer = function(query, dataToInsert, products, res, insertFunction){
+	var connection = mysql.createConnection(connectionObject);
+	connection.query(query,dataToInsert, insertFunction(res,products));
+	connection.end();
+}
+
 exports.placeOrder = function(req, res){
-	customer = {};
-	products = req.body;
-	var actualProducts = {};
-	customer.name = products.user_name;
-	customer.contact_no = products.contact_no;
-	delete(products["user_name"]);
-	delete(products["contact_no"]);
-	var keys = Object.keys(products);
+	input = seperateProductAndCustomer(req.body);
+	var customerQuery = 'insert into customer set ?';
+	console.log("duba",input);
+	insertForCustomer(customerQuery,input.customer,input.products,res,insertForOrder);
+}
+var seperateProductAndCustomer = function(request){
+	var input = {};
+	input.customer = {};
+	input.products = {};
+	input.customer.customer_name = request.customer_name;
+	input.customer.contact_no = request.contact_no;
+	delete(request["customer_name"]);
+	delete(request["contact_no"]);
+	var keys = Object.keys(request);
 	keys.forEach(function(item){
-		if(products[item] != ''){
-			actualProducts[item] = products[item][0]; 
+		if(request[item] != ''){
+			input.products[item] = request[item]; 
 		}
 	});
-	console.log(customer);
-	console.log(actualProducts);
-	executeQuery('insert into customer set ?',customer,actualProducts,res,insertOrder);
+	return input;
 }

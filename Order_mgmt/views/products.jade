@@ -8,17 +8,14 @@ block content
         th Product Name
         th Price
         th Quantity
-        th Select
        -each product in products
         tr
           td #{product.p_name}
           td #{product.p_price}
           td 
             input(type='text', name='#{product.p_id}' placeholder='Quantity')
-          td 
-            input(type='checkbox', name='#{product.p_id}')
     div 
-        input(type='text', name='user_name' placeholder='Enter your name')
+        input(type='text', name='customer_name' placeholder='Enter your name')
         br
         input(type='text', name='contact_no' placeholder='Contact Number')
     input(type='submit' value='Place Order')
