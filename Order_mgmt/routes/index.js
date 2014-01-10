@@ -21,16 +21,17 @@ exports.order = function(req, res){
 	viewQueryResults(productsQuery,res,viewProducts);
 }
 
-var insertFororder_items = function(products){
+var insertFororder_items = function(products,res){
 	return function(err, result){
 		if (err) throw err;
 		var order_id = result.insertId;
-		order_items = Object.keys(products);
+		var order_items = Object.keys(products);
 		var connection = mysql.createConnection(connectionObject);
 		order_items.forEach(function(item){
-			var query = "insert into order_items values (" + order_id +",'" + item +"',"+ products[item] + ")";
+			var query = "insert into order_items values (" + order_id +",'" + item +"',"+ products[item][0] + ")";
 			connection.query(query,item,function(err,result){
 			if (err) throw err;
+				exports.order(null ,res);
 			});
 		});
 	}
@@ -39,11 +40,15 @@ var insertFororder_items = function(products){
 var insertForOrder = function(res, products){
 	return function(err, result) {
 		 if (err) throw err;
-		 var query = "insert into orders (cust_id,amount)values("+result.insertId+",500)";
+		 var sum = 0;
+		 var items = Object.keys(products);
+		 var totalAmount = items.reduce(function(sum,item){
+				return sum + products[item][0] * products[item][1];
+			},0);
+		 var query = "insert into orders (cust_id,amount)values(" + result.insertId + "," + totalAmount + ")";
 		 var connection = mysql.createConnection(connectionObject);
-		 connection.query(query,{},insertFororder_items(products));
+		 connection.query(query,{},insertFororder_items(products,res));
 	}
-	res.end();
 }
 
 var insertForCustomer = function(query, dataToInsert, products, res, insertFunction){
@@ -55,7 +60,6 @@ var insertForCustomer = function(query, dataToInsert, products, res, insertFunct
 exports.placeOrder = function(req, res){
 	input = seperateProductAndCustomer(req.body);
 	var customerQuery = 'insert into customer set ?';
-	console.log("duba",input);
 	insertForCustomer(customerQuery,input.customer,input.products,res,insertForOrder);
 }
 var seperateProductAndCustomer = function(request){
@@ -68,7 +72,7 @@ var seperateProductAndCustomer = function(request){
 	delete(request["contact_no"]);
 	var keys = Object.keys(request);
 	keys.forEach(function(item){
-		if(request[item] != ''){
+		if(request[item][0] != ''){
 			input.products[item] = request[item]; 
 		}
 	});

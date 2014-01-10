@@ -14,6 +14,8 @@ block content
           td #{product.p_price}
           td 
             input(type='text', name='#{product.p_id}' placeholder='Quantity')
+          td
+            input(type='hidden', name='#{product.p_id}' value='#{product.p_price}')
     div 
         input(type='text', name='customer_name' placeholder='Enter your name')
         br
